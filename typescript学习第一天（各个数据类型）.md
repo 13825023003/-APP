@@ -133,3 +133,162 @@ const arr:readonly [string,number] = ['急急急',777];
 arr[0] = "qqq"//Cannot assign to '0' because it is a read-only property.
 arr.push(6)//Property 'push' does not exist on type 'readonly [string, number]'.
 ```
+
+#### 函数
+
+##### 函数声明
+
+```ts
+// 函数声明
+function sum(x:number,y:number):number{
+    return x + y
+}
+```
+上面代码表示，sum函数接收两个number类型参数，并且它的返回类型也是number类型
+
+##### 函数表达式
+
+```ts
+// 函数表达式
+const sum2 = function(x:number,y:number):number{
+    return x + y
+}
+```
+##### 箭头函数
+
+```ts
+// 箭头函数
+const sum3 = (x:number,y:number):number=>{
+    return x + y
+}
+```
+##### 可选参数
+
+```ts
+// 可选参数
+function queryUserInfo(name:string,age?:number){
+    if(age){
+        return `我叫${name},${age}岁`;
+    }
+    return `我叫${name},年龄未知`
+}
+console.log(queryUserInfo('你爷爷',80)) //我叫你爷爷,80岁
+console.log(queryUserInfo('你奶奶')) //我叫你奶奶,年龄未知
+```
+**注意：**可选参数后面不能再出现必选参数
+
+##### 参数默认值
+
+可以给参数一个默认值，当调用者没有传入该参数或者传入**undefined**时，这个默认值就生效
+
+```ts
+function queryUserInfo(name:string,age:number,sex:string='不详'){
+    return `姓名：${name},年龄：${age},性别：${sex}`
+}
+console.log(queryUserInfo('xxx',26)) //姓名：xxx,年龄：26,性别：不详
+```
+**注意**：有默认值的参数也可放置在其他参数前，只不过要主动传入**undefined**才能触发这个参数的默认值         
+
+##### 剩余参数
+
+```ts
+// 剩余参数
+function push(arr:any[],...items:any[]){
+    items.forEach(items => arr.push(items))
+}
+
+let arr:any[] = []
+push(arr,1,2,3,"你爷爷","你奶奶")
+console.log(arr) //[1, 2, 3, "你爷爷", "你奶奶"]
+```
+##### 函数重载
+
+由于JS是动态类型语言，我们经常会使用不同类型的参数来调用同一个函数，该函数会返回不同类型的结果，而在TS里传入的参数同时传入支持string和number类型，我们可以先定义一个联合类型string|number，再给这个联合类型取个名字：
+
+```ts
+type UnionType = string | number //类型别名
+function sum(x:UnionType,y:UnionType){
+    if(typeof x === 'string' || typeof y === 'string'){
+        return x.toString() + y.toString()
+    }
+    return x + y
+}
+
+const res = sum('侬','好')
+res.split('') //Property 'split' does not exist on type 'string | number'.
+//   Property 'split' does not exist on type 'number'
+```
+**注意**：类型number上不存在split属性
+
+**函数重载或方法重载是使用相同名称和不同参数数量或类型创建多个方法的一种能力**，要解决上面的问题，只需定义函数返回类型为any就可
+
+#### any
+
+在TS中，任何类型都可以被归为any类型，any类型是类型系统的顶级类型
+
+```ts
+// 普通类型，在赋值过程中改变类型不允许
+let a:string = '你奶奶喜欢你爷爷';
+a = 666 //Type 'number' is not assignable to type 'string'.
+
+// 如果是any类型，则允许被赋值为任意类型
+let b:any = 666;
+b = "呵呵";
+b = true;
+b = null;
+b = undefined;
+b = [];
+b = {};
+
+// 如果变量在声明的时候，未指定其类型，那么会被识别为any类型
+let something; //let something: any
+something = '嘻嘻嘻';
+something = 555;
+something = false;
+```
+**注意**：使用any类型就失去了使用TS的意义，长此以往会放松我们对自己的要求，尽量不要使用any
+
+##### unknown
+
+unknown与any十分相似，所有类型都可以分配给unknown类型
+
+```ts
+let a:unknown = 250;
+a = "天动万象";
+a = true
+```
+**注意**：unknown与any最大区别是：任何类型的值都可以赋值给any，同时any类型的值也可以赋值给任何类型（never除外）。任何类型的值都可以赋值给unknown，unknown的值只能赋值给any和unknown
+
+```ts
+let a1:any = 666;
+let b1:unknown = a1;
+
+let a2:unknown = 777;
+let b2:number = a2;//Type 'unknown' is not assignable to type 'number'.
+```
+如果不缩小类型，就无法对unknown类型执行任何操作：
+
+```ts
+function battle(){
+    return 'victory!'
+}
+
+const record:unknown = {hero:battle};
+record.hero(); //Property 'hero' does not exist on type 'unknown'
+```
+这种机制起到了很强的预防性，更安全
+
+我们可以用**typeof**或者**类型断言**的方式来缩小未知范围：
+
+```ts
+const a:unknown = "超神";
+a.split('');//Property 'split' does not exist on type 'unknown'
+
+// typeof方法
+if(typeof a === 'string'){
+    a.split('')
+}
+
+// 类型断言
+(a as string).split('')
+```
